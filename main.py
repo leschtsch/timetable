@@ -7,7 +7,7 @@ root['bg'] = '#aaaaaa'
 root.title('Составитель расписания')
 x = root.winfo_screenwidth()
 y = root.winfo_screenheight()
-root.geometry(str(x//2)+'x'+str(y//2))
+root.geometry(str(x//2)+'x'+str(y//2)+'+10+10')
 b = Button(root, text='Составить расписание', command=tt, bg='#ee7777')
 b.pack()
 
