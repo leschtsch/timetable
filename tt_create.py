@@ -20,7 +20,7 @@ def prior():
 
 # this is just key for list.sort() for order
 def order_sort(a):
-    return priority[search(a[0][0])][2]+priority[search(a[1][0])][2]
+    return priority[search(a[0][0])][2] + priority[search(a[1][0])][2]
 
 
 # this creates order of pairs
@@ -36,7 +36,7 @@ def order():
         elif a[1] == 'подряд':
             row.append([[p1[0], (p1[1], p1[2])], [p2[0], (p2[1], p2[2])]])
         else:
-            c.create_text(10, 10, text='неизвестное слово:'+a[1], font='Arial50', fill='#f00000', anchor='nw')
+            c.create_text(10, 10, text='неизвестное слово:' + a[1], font='Arial50', fill='#f00000', anchor='nw')
     f.close()
     row.sort(key=order_sort)
     after.sort(key=order_sort)
@@ -50,7 +50,9 @@ def create_pairs(a):
     ft = ''.join([i for i in f])
     ft = ft.split('@')
     for i in ft:
-        lessons[a][tuple(i.split('#')[0].split('\t'), )] = i.split('#')[1]
+        ind = tuple(i.split('#')[0].split('\t'), )
+        ind = (ind[0].strip('\n'), ind[1].strip('\n'))
+        lessons[a][ind] = i.split('#')[1]
     for i in lessons[a]:
         lessons[a][i] = lessons[a][i].split('\n')
         while lessons[a][i].count(''):
@@ -95,16 +97,68 @@ def search(name):
             return i
 
 
-# this searches most wanted pair of lessons
-def row_search_max(a):
+# this is sort for orders
+def order_index_sort(a, n1, n2):
+    global lessons
+    t1 = lessons[n1[0]][n1[1]]
+    t2 = lessons[n2[0]][n2[1]]
+    p1 = priority[search(n1[0])][2]
+    p2 = priority[search(n2[0])][2]
+    s1 = [[i] for i in a.copy()]
+    s2 = []
+    while len(s1) > 1:  # merge sort
+        while len(s1) > 1:
+            n = []
+            while True:
+                if int(t1[s1[0][0][0]][s1[0][0][1]]) * p1 + int(t2[s1[0][0][2]][s1[0][0][3]]) * p2 < int(
+                        t1[s1[1][0][0]][s1[1][0][1]]) * p1 + int(t2[s1[1][0][2]][s1[1][0][3]]) * p2:
+                    n.append(s1[0].pop(0))
+                else:
+                    n.append(s1[1].pop(0))
+                if not len(s1[0]):
+                    n.extend(s1[1])
+                    break
+                if not len(s1[1]):
+                    n.extend(s1[0])
+                    break
+            s2.append(n)
+            s1.pop(0)
+            s1.pop(0)
+        if len(s1):
+            s2.append(s1[0])
+        s1 = s2.copy()
+        s2 = []
+    return s1[0]
+
+
+# this searches most wanted pair of lessons in a row
+def row_search_max(a, ttbl):
     p1 = priority[search(a[0][0])][2]
     p2 = priority[search(a[1][0])][2]
     m = []
     for i in range(4):
         for z in range(6):
-            m.append(int(lessons[a[0][0]][a[0][1]][i][z])*p1 + int(lessons[a[1][0]][a[1][1]][i+1][z])*p2)
-    m.sort()
-    m = m[-lengen:]
+            if not (ttbl[int(a[0][1][1]) - 6][i][z] or ttbl[int(a[1][1][1]) - 6][i + 1][z]):
+                m.append([i, z, i + 1, z])
+    m = order_index_sort(m, a[0], a[1])
+    if len(m) > lengen:
+        m = m[-lengen:]
+    return m
+
+
+# this searches most wanted pair of lessons
+def after_search_max(a, ttbl):
+    m = []
+    for i in range(len(lessons[a[0][0]][a[0][1]])):
+        for z in range(len(lessons[a[0][0]][a[0][1]][i])):
+            for q in range(len(lessons[a[1][0]][a[1][1]])):
+                for r in range(len(lessons[a[1][0]][a[1][1]][q])):
+                    if q * len(lessons[a[1][0]][a[1][1]][q]) + r > i * len(lessons[a[0][0]][a[0][1]][i]) + z:
+                        if not (ttbl[int(a[0][1][1]) - 6][i][z] or ttbl[int(a[1][1][1]) - 6][q][r]):
+                            m.append([i, z, q, r])
+                    m = order_index_sort(m, a[0], a[1])
+                    if len(m) > lengen:
+                        m = m[-lengen:]
     return m
 
 
@@ -120,28 +174,61 @@ def tt_copy(ttable):
 
 # this is a part of generate
 def addd(a, i, z):
+    global lessons
     res = []
     m = '5'
     flag = 0
-    while flag < 5:
-        if int(m) < -5:
-            return []
-        for q in range(len(lessons[i][z])):
-            for x in range(len(lessons[i][z][q])):
-                if (lessons[i][z][q][x] == m) and (not a[int(z[1]) - 6][q][x]):
-                    if ((not a[0][q][x]) or (a[0][q][x][0] != i)) and (
-                            (not a[1][q][x]) or (a[1][q][x][0] != i)) and (
-                            (not a[2][q][x]) or (a[2][q][x][0] != i)) and (
-                            (not a[3][q][x]) or (a[3][q][x][0] != i)) and (
-                            (not a[4][q][x]) or (a[4][q][x][0] != i)) and (
-                            (not a[5][q][x]) or (a[5][q][x][0] != i)):
-                        a2 = tt_copy(a)
-                        a2[int(z[1]) - 6][q][x] = [i, z]
-                        res.append(a2)
-                        flag += 1
-        m = str(int(m) - 1)
+    full = False
+    for ii in a:
+        if full:
+            break
+        for zz in ii:
+            if full:
+                break
+            for q in zz:
+                if full:
+                    break
+                if not q:
+                    full = True
+                if full:
+                    break
+    if full:
+        while flag < lengen:
+            if int(m) < -5:
+                return []
+            for q in range(len(lessons[i][z])):
+                for x in range(len(lessons[i][z][q])):
+                    if (lessons[i][z][q][x] == m) and (not a[int(z[1]) - 6][q][x]):
+                        if ((not a[0][q][x]) or (a[0][q][x][0] != i)) and (
+                                (not a[1][q][x]) or (a[1][q][x][0] != i)) and (
+                                (not a[2][q][x]) or (a[2][q][x][0] != i)) and (
+                                (not a[3][q][x]) or (a[3][q][x][0] != i)) and (
+                                (not a[4][q][x]) or (a[4][q][x][0] != i)) and (
+                                (not a[5][q][x]) or (a[5][q][x][0] != i)):
+                            a2 = tt_copy(a)
+                            a2[int(z[1]) - 6][q][x] = [i, z]
+                            res.append(a2)
+                            flag += 1
+            m = str(int(m) - 1)
     if flag == 0:
         return []
+    return res
+
+
+# this is addd for pair of lessons
+def addd_2(a, option, ttbl):
+    if option == 'row':
+        m = row_search_max(a, ttbl)
+    elif option == 'after':
+        m = after_search_max(a, ttbl)
+    if not m:
+        return []
+    res = []
+    for i in m:
+        ttbln = tt_copy(ttbl)
+        ttbln[int(a[0][1][1]) - 6][i[0]][i[1]] = a[0]
+        ttbln[int(a[1][1][1]) - 6][i[2]][i[3]] = a[1]
+        res.append(ttbln)
     return res
 
 
@@ -159,12 +246,52 @@ def lessons_copy(lessons):
 
 # this uses normal generation
 def generate():
-    global lessons
-    flag = False
+    global lessons, row, after
     ttable = [[[[] for z in range(6)] for i in range(5)] for j in range(6)]
     lessons2 = lessons_copy(lessons)
     ttables = [ttable]
-    while lessons2:
+
+    while row:   # this inserts row
+        ttables2 = []
+        for i in ttables:
+            n = addd_2(row[0], 'row', i)
+            if n:
+                ttables2.extend(n)
+            else:
+                return []
+        lessons2[row[0][0][0]].pop(row[0][0][1])
+        if not lessons2[row[0][0][0]]:
+            lessons2.pop(row[0][0][0])
+        lessons2[row[0][1][0]].pop(row[0][1][1])
+        if not lessons2[row[0][1][0]]:
+            lessons2.pop(row[0][1][0])
+        row.pop(0)
+        ttables = ttables2
+        ttables.sort(key=evaluate)
+        if len(ttables) > lengen:
+            ttables = ttables[-lengen:]
+
+    while after:  # this inserts after
+        ttables2 = []
+        for i in ttables:
+            n = addd_2(after[0], 'after', i)
+            if n:
+                ttables2.extend(n)
+            else:
+                return []
+        lessons2[after[0][0][0]].pop(after[0][0][1])
+        if not lessons2[after[0][0][0]]:
+            lessons2.pop(after[0][0][0])
+        lessons2[after[0][1][0]].pop(after[0][1][1])
+        if not lessons2[after[0][1][0]]:
+            lessons2.pop(after[0][1][0])
+        after.pop(0)
+        ttables = ttables2
+        ttables.sort(key=evaluate)
+        if len(ttables) > lengen:
+            ttables = ttables[-lengen:]
+
+    while lessons2:  # this inserts others
         ttables2 = []
         i = list(lessons2.keys())[0]
         z = list(lessons2[i].keys())[0]
@@ -172,16 +299,16 @@ def generate():
             n = addd(q, i, z)
             if n:
                 ttables2.extend(n)
-                flag = True
-        if not flag:
-            return []
+            else:
+                return []
         ttables = ttables2
         lessons2[i].pop(z)
         if not lessons2[i]:
             lessons2.pop(i)
         ttables.sort(key=evaluate)
-        while len(ttables) > lengen:
-            ttables.pop(0)
+        if len(ttables) > lengen:
+            ttables = ttables[-lengen:]
+
     return ttables
 
 
@@ -202,8 +329,9 @@ def draw(ttl, conven):
                                        60 + 30 * q + 50 * q * 5 + 50 * (z + 1),
                                        fill=color)
                     center = ((60 + w * (2 * i + 1)) // 2, (100 * q * 5 + 50 * z + 120 + 60 * q + 50 * (z + 1)) // 2)
-                    c.create_text(center[0], center[1], text=ttl[i][z][q][1][0] + '       ' + ttl[i][z][q][0],
-                                  font='Arial 10')
+                    tx = ttl[i][z][q][1][0] + '       ' + ttl[i][z][q][0]
+                    tx.strip('\n')
+                    c.create_text(center[0], center[1], text=tx, font='Arial 10')
                     c.create_text(200, 1750, text='удобство расписания: ' + str(conven), font='Arial15')
 
 
@@ -227,10 +355,11 @@ def tt():
     ttbl = generate()
     if ttbl:
         ttbl = ttbl[0]
+        print(ttbl)
         convenience = evaluate(ttbl)
         draw(ttbl, convenience)
     else:
-        c.create_text(10, 10, text='не удалось составить расписание')
+        c.create_text(75, 10, text='не удалось составить расписание')
 
 
 convenience = 0
@@ -238,13 +367,6 @@ lessons = {}
 after = []
 row = []
 priority = []
-ptt = []
 lengen = 5
-for i in range(6):
-    ptt.append([])
-    for z in '0234':
-        for j in '012345':
-            ptt[i].append(z + j)
 if __name__ == '__main__':
     tt()
-    print(row)
