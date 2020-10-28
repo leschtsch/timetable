@@ -20,7 +20,22 @@ def prior():
 
 # this is just key for list.sort() for order
 def order_sort(a):
-    return priority[search(a[0][0])][2] + priority[search(a[1][0])][2]
+    r = 0
+    p1 = {str(i): 0 for i in range(-5, 6)}
+    p2 = {str(i): 0 for i in range(-5, 6)}
+    for i in lessons[a[0][0]][a[0][1]]:
+        for z in i:
+            p1[z] += 1
+    for i in lessons[a[1][0]][a[1][1]]:
+        for z in i:
+            p2[z] += 1
+    for i in lessons[a[0][0]][a[0][1]]:
+        for z in i:
+            r += int(z)*p1[z]
+    for i in lessons[a[1][0]][a[1][1]]:
+        for z in i:
+            r += int(z)*p2[z]
+    return r
 
 
 # this creates order of pairs
@@ -244,14 +259,31 @@ def lessons_copy(lessons):
     return r
 
 
+# this is just key for list.sort() for generate
+def pairs_sort(a):
+    r = 0
+    p1 = {str(i): 0 for i in range(-5, 6)}
+    for i in lessons[a[0]][a[1]]:
+        for z in i:
+            p1[z] += 1
+    for i in lessons[a[0]][a[1]]:
+        for z in i:
+            r += int(z)*p1[z]
+    return r
+
+
 # this uses normal generation
 def generate():
     global lessons, row, after
     ttable = [[[[] for z in range(6)] for i in range(5)] for j in range(6)]
-    lessons2 = lessons_copy(lessons)
     ttables = [ttable]
+    pairs = []
+    for i in lessons:
+        for z in lessons[i]:
+            pairs.append([i, z])
+    pairs.sort(key=pairs_sort)
 
-    while row:   # this inserts row
+    while row:  # this inserts row
         ttables2 = []
         for i in ttables:
             n = addd_2(row[0], 'row', i)
@@ -259,12 +291,8 @@ def generate():
                 ttables2.extend(n)
             else:
                 return []
-        lessons2[row[0][0][0]].pop(row[0][0][1])
-        if not lessons2[row[0][0][0]]:
-            lessons2.pop(row[0][0][0])
-        lessons2[row[0][1][0]].pop(row[0][1][1])
-        if not lessons2[row[0][1][0]]:
-            lessons2.pop(row[0][1][0])
+        pairs.remove([row[0][0][0], row[0][0][1]])
+        pairs.remove([row[0][1][0], row[0][1][1]])
         row.pop(0)
         ttables = ttables2
         ttables.sort(key=evaluate)
@@ -279,44 +307,43 @@ def generate():
                 ttables2.extend(n)
             else:
                 return []
-        lessons2[after[0][0][0]].pop(after[0][0][1])
-        if not lessons2[after[0][0][0]]:
-            lessons2.pop(after[0][0][0])
-        lessons2[after[0][1][0]].pop(after[0][1][1])
-        if not lessons2[after[0][1][0]]:
-            lessons2.pop(after[0][1][0])
+        pairs.remove([row[0][0][0], row[0][0][1]])
+        pairs.remove([row[0][1][0], row[0][1][1]])
         after.pop(0)
         ttables = ttables2
         ttables.sort(key=evaluate)
         if len(ttables) > lengen:
             ttables = ttables[-lengen:]
 
-    while lessons2:  # this inserts others
+    while pairs:  # this inserts others
         ttables2 = []
-        i = list(lessons2.keys())[0]
-        z = list(lessons2[i].keys())[0]
         for q in ttables:
-            n = addd(q, i, z)
+            n = addd(q, pairs[0][0], pairs[0][1])
             if n:
                 ttables2.extend(n)
             else:
                 return []
         ttables = ttables2
-        lessons2[i].pop(z)
-        if not lessons2[i]:
-            lessons2.pop(i)
+        pairs.pop(0)
         ttables.sort(key=evaluate)
         if len(ttables) > lengen:
             ttables = ttables[-lengen:]
-
     return ttables
+
+
+# this creates vertical text
+def create_vertical_text(a, b, tex):
+    d = 0
+    for i in tex:
+        c.create_text(a, b + d, text=i, font='Arial15')
+        d += 17
 
 
 # this draws timetable
 def draw(ttl, conven):
     global c, timetable
-    x = timetable.winfo_screenwidth()
-    w = (x - 200) // 6
+    c.delete('all')
+    w = 180
     for i in range(len(ttl)):
         for z in range(len(ttl[i])):
             for q in range(len(ttl[i][z])):
@@ -332,34 +359,72 @@ def draw(ttl, conven):
                     tx = ttl[i][z][q][1][0] + '       ' + ttl[i][z][q][0]
                     tx.strip('\n')
                     c.create_text(center[0], center[1], text=tx, font='Arial 10')
-                    c.create_text(200, 1750, text='удобство расписания: ' + str(conven), font='Arial15')
+
+    c.create_text(900, 1750, text='сгенерировано ' + str(len(ttbl)) + ' расписаний из ' + str(lengen), font='Arial15')
+    c.create_text(200, 1750, text='текущее расписание: ' + str(cttl + 1) + ' из ' + str(len(ttbl)), font='Arial15')
+    c.create_text(200, 1800, text='удобство текущего расписания: ' + str(conven), font='Arial15')
+    create_vertical_text(15, 70, 'Понедельник')
+    create_vertical_text(15, 350, 'Вторник')
+    create_vertical_text(15, 630, 'Среда')
+    create_vertical_text(15, 910, 'Четверг')
+    create_vertical_text(15, 1190, 'Пятница')
+    create_vertical_text(15, 1470, 'Суббота')
+
+    for i in range(6):
+        for z in range(6):
+            c.create_text(50 + i * 180, 50 + z * 280, text=str(i + 6), font='Arial15')
+
+
+# this is def for 'forward' button
+def button_forward():
+    global cttl, ttbl, convenience
+    if ttbl:
+        if cttl < len(ttbl)-1:
+            print(1)
+            cttl += 1
+            convenience = evaluate(ttbl[cttl])
+            draw(ttbl[cttl], convenience)
+    else:
+        c.create_text(175, 10, text='не удалось составить расписание')
+
+
+# this is def for 'back' button
+def button_back():
+    global cttl, ttbl, convenience
+    if ttbl:
+        if cttl > 0:
+            print(1)
+            cttl -= 1
+            convenience = evaluate(ttbl[cttl])
+            draw(ttbl[cttl], convenience)
+    else:
+        c.create_text(175, 10, text='не удалось составить расписание')
 
 
 # this creates window with timetable
 def tt():
     global timetable, c, convenience
     timetable = Toplevel()
+    timetable['bg'] = '#aaaaaa'
     timetable.title('Расписание')
-    x = timetable.winfo_screenwidth()
-    y = timetable.winfo_screenheight()
-    timetable.geometry(str(x - 120) + 'x' + str(y - 120) + '+30+30')
-    frame = Frame(timetable, width=x - 120, height=y - 120)
-    frame.pack()
-    c = Canvas(frame, width=x - 140, height=10000, bg='#aaaaaa', scrollregion=(0, 0, 1000, 2000))
+    timetable.geometry('1250x600+10+30')
+    bb = Button(timetable, text='Назад', bg='#ee7777', command=button_back)
+    bb.pack(side='left')
+    frame = Frame(timetable, width=1160, height=700, bg='#aaaaaa')
+    frame.pack(side='left')
+    c = Canvas(frame, width=1140, height=1900, bg='#aaaaaa', scrollregion=(0, 0, 1000, 1900))
     s = Scrollbar(frame)
     c.config(yscrollcommand=s.set)
     s.config(command=c.yview)
     c.pack(side='left')
-    s.pack(fill='y', expand=True)
-    read()
-    ttbl = generate()
+    s.pack(fill='y', expand=True, side='right')
+    bf = Button(timetable, text='вперед', bg='#ee7777', command=button_forward)
+    bf.pack(side='left')
     if ttbl:
-        ttbl = ttbl[0]
-        print(ttbl)
-        convenience = evaluate(ttbl)
-        draw(ttbl, convenience)
+        convenience = evaluate(ttbl[cttl])
+        draw(ttbl[cttl], convenience)
     else:
-        c.create_text(75, 10, text='не удалось составить расписание')
+        c.create_text(175, 10, text='не удалось составить расписание')
 
 
 convenience = 0
@@ -368,5 +433,9 @@ after = []
 row = []
 priority = []
 lengen = 5
+cttl = 0
+read()
+ttbl = generate()
+ttbl = ttbl[::-1]
 if __name__ == '__main__':
     tt()
