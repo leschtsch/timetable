@@ -1,4 +1,5 @@
 from tkinter import *
+import openpyxl
 
 
 # this is just key for list.sort() for prior
@@ -31,10 +32,10 @@ def order_sort(a):
             p2[z] += 1
     for i in lessons[a[0][0]][a[0][1]]:
         for z in i:
-            r += int(z)*p1[z]
+            r += int(z) * p1[z] * priority[search(a[0][0])][2]
     for i in lessons[a[1][0]][a[1][1]]:
         for z in i:
-            r += int(z)*p2[z]
+            r += int(z) * p2[z] * priority[search(a[1][0])][2]
     return r
 
 
@@ -77,7 +78,7 @@ def create_pairs(a):
     f.close()
 
 
-# this unites previous two procedures
+# this reads data
 def read():
     global timetable, priority, c, lessons
     prior()
@@ -91,6 +92,77 @@ def read():
     except FileNotFoundError:
         c.create_text(10, 10, text='не все файлы препов найдены', font='Arial50', fill='#f00000', anchor='nw')
     order()
+
+
+# this creates order of pairs from excel
+def order_excel():
+    global row, after, c
+    i = 1
+    while True:
+        if not data['порядок'][i][0].value:
+            break
+        else:
+            if data['порядок'][i][1].value == 'подряд':
+                s = data['порядок'][i][0].value.split()
+                r = [[s[0], (' '.join(s[1:-1]), s[-1])]]
+                s = data['порядок'][i][2].value.split()
+                r.append([s[0], (' '.join(s[1:-1]), s[-1])])
+                row.append(r)
+            elif data['порядок'][i][1].value == 'после':
+                s = data['порядок'][i][0].value.split()
+                r = [[s[0], (' '.join(s[1:-1]), s[-1])]]
+                s = data['порядок'][i][2].value.split()
+                r.append([s[0], (' '.join(s[1:-1]), s[-1])])
+                after.append(r)
+            else:
+                c.create_text(10, 10, text='неизвестное слово:' + data['порядок'][i][1].value, font='Arial50',
+                              fill='#f00000', anchor='nw')
+        i += 1
+
+
+# this reads list of teachers from excel
+def prior_excel():
+    global priority
+    i = 1
+    while True:
+        if data['приоритеты'][i][0].value:
+            priority.append([data['приоритеты'][i][0].value,
+                             data['приоритеты'][i][1].value, data['приоритеты'][i][2].value])
+        else:
+            break
+        i += 1
+    priority.sort(key=priority_sort)
+    for i in range(len(priority)):
+        data['приоритеты'][i + 1][0].value = priority[i][0]
+        data['приоритеты'][i + 1][1].value = priority[i][1]
+        data['приоритеты'][i + 1][2].value = priority[i][2]
+
+
+# this reads teachers' lessons from excel
+def create_pairs_excel(a):
+    global lessons
+    lessons[a] = {}
+    i = 1
+    while True:
+        if not data[a][i][0].value:
+            break
+        lessons[a][(data[a][i][0].value, str(data[a][i][1].value))] = []
+        for z in range(i + 1, i + 6):
+            lessons[a][(data[a][i][0].value, str(data[a][i][1].value))].append([])
+            for q in range(6):
+                lessons[a][(data[a][i][0].value, str(data[a][i][1].value))][z - i - 1].append(str(data[a][z][q].value))
+        i += 6
+
+
+# this reads data from excel
+def read_excel():
+    prior_excel()
+    try:
+        for i in priority:
+            create_pairs_excel(i[0])
+    except KeyError:
+        c.create_text(10, 10, text='не все листы препов найдены', font='Arial50', fill='#f00000', anchor='nw')
+    order_excel()
 
 
 # this evaluates the timetable
@@ -268,7 +340,7 @@ def pairs_sort(a):
             p1[z] += 1
     for i in lessons[a[0]][a[1]]:
         for z in i:
-            r += int(z)*p1[z]
+            r += int(z) * p1[z] * priority[search(a[0])][2]
     return r
 
 
@@ -379,8 +451,7 @@ def draw(ttl, conven):
 def button_forward():
     global cttl, ttbl, convenience
     if ttbl:
-        if cttl < len(ttbl)-1:
-            print(1)
+        if cttl < len(ttbl) - 1:
             cttl += 1
             convenience = evaluate(ttbl[cttl])
             draw(ttbl[cttl], convenience)
@@ -401,41 +472,37 @@ def button_back():
         c.create_text(175, 10, text='не удалось составить расписание')
 
 
-# this creates window with timetable
-def tt():
-    global timetable, c, convenience
-    timetable = Toplevel()
-    timetable['bg'] = '#aaaaaa'
-    timetable.title('Расписание')
-    timetable.geometry('1250x600+10+30')
-    bb = Button(timetable, text='Назад', bg='#ee7777', command=button_back)
-    bb.pack(side='left')
-    frame = Frame(timetable, width=1160, height=700, bg='#aaaaaa')
-    frame.pack(side='left')
-    c = Canvas(frame, width=1140, height=1900, bg='#aaaaaa', scrollregion=(0, 0, 1000, 1900))
-    s = Scrollbar(frame)
-    c.config(yscrollcommand=s.set)
-    s.config(command=c.yview)
-    c.pack(side='left')
-    s.pack(fill='y', expand=True, side='right')
-    bf = Button(timetable, text='вперед', bg='#ee7777', command=button_forward)
-    bf.pack(side='left')
-    if ttbl:
-        convenience = evaluate(ttbl[cttl])
-        draw(ttbl[cttl], convenience)
-    else:
-        c.create_text(175, 10, text='не удалось составить расписание')
-
-
+timetable = Toplevel()
+timetable['bg'] = '#aaaaaa'
+timetable.title('Расписание')
+timetable.geometry('1250x600+10+30')
+bb = Button(timetable, text='Назад', bg='#ee7777', command=button_back)
+bb.pack(side='left')
+frame = Frame(timetable, width=1160, height=700, bg='#aaaaaa')
+frame.pack(side='left')
+c = Canvas(frame, width=1140, height=1900, bg='#aaaaaa', scrollregion=(0, 0, 1000, 1900))
+s = Scrollbar(frame)
+c.config(yscrollcommand=s.set)
+s.config(command=c.yview)
+c.pack(side='left')
+s.pack(fill='y', expand=True, side='right')
+bf = Button(timetable, text='вперед', bg='#ee7777', command=button_forward)
+bf.pack(side='left')
 convenience = 0
 lessons = {}
 after = []
 row = []
 priority = []
 lengen = 5
-cttl = 0
-read()
+data = openpyxl.open('данные.xlsx')
+read_excel()
+data.save('данные.xlsx')
 ttbl = generate()
 ttbl = ttbl[::-1]
-if __name__ == '__main__':
-    tt()
+cttl = 0
+if ttbl:
+    convenience = evaluate(ttbl[cttl])
+    draw(ttbl[cttl], convenience)
+else:
+    c.create_text(175, 10, text='не удалось составить расписание')
+
