@@ -1,5 +1,6 @@
 from tkinter import *
 import openpyxl
+from openpyxl.styles import PatternFill
 
 
 # this is just key for list.sort() for prior
@@ -103,16 +104,16 @@ def order_excel():
             break
         else:
             if data['порядок'][i][1].value == 'подряд':
-                s = data['порядок'][i][0].value.split()
-                r = [[s[0], (' '.join(s[1:-1]), s[-1])]]
-                s = data['порядок'][i][2].value.split()
-                r.append([s[0], (' '.join(s[1:-1]), s[-1])])
+                st = data['порядок'][i][0].value.split()
+                r = [[st[0], (' '.join(st[1:-1]), st[-1])]]
+                st = data['порядок'][i][2].value.split()
+                r.append([st[0], (' '.join(st[1:-1]), st[-1])])
                 row.append(r)
             elif data['порядок'][i][1].value == 'после':
-                s = data['порядок'][i][0].value.split()
-                r = [[s[0], (' '.join(s[1:-1]), s[-1])]]
-                s = data['порядок'][i][2].value.split()
-                r.append([s[0], (' '.join(s[1:-1]), s[-1])])
+                st = data['порядок'][i][0].value.split()
+                r = [[st[0], (' '.join(st[1:-1]), st[-1])]]
+                st = data['порядок'][i][2].value.split()
+                r.append([st[0], (' '.join(st[1:-1]), st[-1])])
                 after.append(r)
             else:
                 c.create_text(10, 10, text='неизвестное слово:' + data['порядок'][i][1].value, font='Arial50',
@@ -220,8 +221,6 @@ def order_index_sort(a, n1, n2):
 
 # this searches most wanted pair of lessons in a row
 def row_search_max(a, ttbl):
-    p1 = priority[search(a[0][0])][2]
-    p2 = priority[search(a[1][0])][2]
     m = []
     for i in range(4):
         for z in range(6):
@@ -472,6 +471,27 @@ def button_back():
         c.create_text(175, 10, text='не удалось составить расписание')
 
 
+# this saves tiumetables in excel
+def save():
+    global ttbl
+    wb = openpyxl.Workbook()
+    for i in range(len(ttbl)):
+        wb.create_sheet(str(i + 1))
+        for z in range(len(ttbl[i])):
+            for q in range(len(ttbl[i][z])):
+                for x in range(len(ttbl[i][z][q])):
+                    if ttbl[i][z][q][x]:
+                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z+2).value = ttbl[i][z][q][x][0] + ' ' + ' '.join(
+                            ttbl[i][z][q][x][1])
+                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z+2).fill = PatternFill(fill_type='solid',
+                            start_color='FF'+priority[search(ttbl[i][z][q][x][0])][1][1:].upper(),
+                            end_color='FF' + priority[search(ttbl[i][z][q][x][0])][1][1:].upper())
+                    else:
+                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z+2).value = 'пусто'
+    wb.remove_sheet(wb.get_sheet_by_name('Sheet'))
+    wb.save('timetables.xlsx')
+
+
 timetable = Toplevel()
 timetable['bg'] = '#aaaaaa'
 timetable.title('Расписание')
@@ -501,8 +521,8 @@ ttbl = generate()
 ttbl = ttbl[::-1]
 cttl = 0
 if ttbl:
+    save()
     convenience = evaluate(ttbl[cttl])
     draw(ttbl[cttl], convenience)
 else:
     c.create_text(175, 10, text='не удалось составить расписание')
-
