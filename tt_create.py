@@ -406,7 +406,7 @@ def generate():
 def create_vertical_text(a, b, tex):
     d = 0
     for i in tex:
-        c.create_text(a, b + d, text=i, font='Arial15')
+        c.create_text(a, b + d, text=i, font='Arial15', fill=tcolor)
         d += 17
 
 
@@ -429,11 +429,13 @@ def draw(ttl, conven):
                     center = ((60 + w * (2 * i + 1)) // 2, (100 * q * 5 + 50 * z + 120 + 60 * q + 50 * (z + 1)) // 2)
                     tx = ttl[i][z][q][1][0] + '       ' + ttl[i][z][q][0]
                     tx.strip('\n')
-                    c.create_text(center[0], center[1], text=tx, font='Arial 10')
+                    c.create_text(center[0], center[1], text=tx, font='Arial 10', )
 
-    c.create_text(900, 1750, text='сгенерировано ' + str(len(ttbl)) + ' расписаний из ' + str(lengen), font='Arial15')
-    c.create_text(200, 1750, text='текущее расписание: ' + str(cttl + 1) + ' из ' + str(len(ttbl)), font='Arial15')
-    c.create_text(200, 1800, text='удобство текущего расписания: ' + str(conven), font='Arial15')
+    c.create_text(900, 1750, text='сгенерировано ' + str(len(ttbl)) + ' расписаний из ' + str(lengen), font='Arial15',
+                  fill=tcolor)
+    c.create_text(200, 1750, text='текущее расписание: ' + str(cttl + 1) + ' из ' + str(len(ttbl)), font='Arial15',
+                  fill=tcolor)
+    c.create_text(200, 1800, text='удобство текущего расписания: ' + str(conven), font='Arial15', fill=tcolor)
     create_vertical_text(15, 70, 'Понедельник')
     create_vertical_text(15, 350, 'Вторник')
     create_vertical_text(15, 630, 'Среда')
@@ -443,7 +445,7 @@ def draw(ttl, conven):
 
     for i in range(6):
         for z in range(6):
-            c.create_text(50 + i * 180, 50 + z * 280, text=str(i + 6), font='Arial15')
+            c.create_text(50 + i * 180, 50 + z * 280, text=str(i + 6), font='Arial15', fill=tcolor)
 
 
 # this is def for 'forward' button
@@ -455,7 +457,7 @@ def button_forward():
             convenience = evaluate(ttbl[cttl])
             draw(ttbl[cttl], convenience)
     else:
-        c.create_text(175, 10, text='не удалось составить расписание')
+        c.create_text(175, 10, text='не удалось составить расписание', fill=tcolor)
 
 
 # this is def for 'back' button
@@ -463,12 +465,11 @@ def button_back():
     global cttl, ttbl, convenience
     if ttbl:
         if cttl > 0:
-            print(1)
             cttl -= 1
             convenience = evaluate(ttbl[cttl])
             draw(ttbl[cttl], convenience)
     else:
-        c.create_text(175, 10, text='не удалось составить расписание')
+        c.create_text(175, 10, text='не удалось составить расписание', fill=tcolor)
 
 
 # this saves tiumetables in excel
@@ -481,43 +482,95 @@ def save():
             for q in range(len(ttbl[i][z])):
                 for x in range(len(ttbl[i][z][q])):
                     if ttbl[i][z][q][x]:
-                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z+2).value = ttbl[i][z][q][x][0] + ' ' + ' '.join(
+                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z + 2).value = ttbl[i][z][q][x][
+                                                                                         0] + ' ' + ' '.join(
                             ttbl[i][z][q][x][1])
-                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z+2).fill = PatternFill(fill_type='solid',
-                            start_color='FF'+priority[search(ttbl[i][z][q][x][0])][1][1:].upper(),
-                            end_color='FF' + priority[search(ttbl[i][z][q][x][0])][1][1:].upper())
+                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z + 2).fill = PatternFill(fill_type='solid',
+                                                                                                start_color='FF' +
+                                                                                                            priority[
+                                                                                                                search(
+                                                                                                                    ttbl[
+                                                                                                                        i][
+                                                                                                                        z][
+                                                                                                                        q][
+                                                                                                                        x][
+                                                                                                                        0])][
+                                                                                                                1][
+                                                                                                            1:].upper(),
+                                                                                                end_color='FF' +
+                                                                                                          priority[
+                                                                                                              search(
+                                                                                                                  ttbl[
+                                                                                                                      i][
+                                                                                                                      z][
+                                                                                                                      q][
+                                                                                                                      x][
+                                                                                                                      0])][
+                                                                                                              1][
+                                                                                                          1:].upper())
                     else:
-                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z+2).value = 'пусто'
+                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z + 2).value = 'пусто'
     wb.remove_sheet(wb.get_sheet_by_name('Sheet'))
     wb.save('timetables.xlsx')
 
 
+# this reads configuration
+def config():
+    global lengen, lenshow, bgcolor, btcolor, tcolor
+    f = open('config.txt')
+    conf = [i.strip() for i in f]
+    lengen = int(conf[0])
+    lenshow = int(conf[1])
+    bgcolor = conf[2]
+    btcolor = conf[3]
+    tcolor = conf[4]
+    if lenshow < 1:
+        lenshow = 1
+    if lengen < 1:
+        lengen = 1
+    if lengen < lenshow:
+        lengen = lenshow
+    conf[0] = lengen
+    conf[1] = lenshow
+    f.close()
+    f = open('config.txt', 'w')
+    for i in conf:
+        print(str(i), file=f)
+    f.close()
+
+
+bgcolor = ''
+btcolor = ''
+tcolor = ''
+lengen = 0
+lenshow = 0
+config()
 timetable = Toplevel()
-timetable['bg'] = '#aaaaaa'
+timetable['bg'] = bgcolor
 timetable.title('Расписание')
 timetable.geometry('1250x600+10+30')
-bb = Button(timetable, text='Назад', bg='#ee7777', command=button_back)
+bb = Button(timetable, text='Назад', bg=btcolor, command=button_back, fg=tcolor)
 bb.pack(side='left')
-frame = Frame(timetable, width=1160, height=700, bg='#aaaaaa')
+frame = Frame(timetable, width=1160, height=700, bg=bgcolor)
 frame.pack(side='left')
-c = Canvas(frame, width=1140, height=1900, bg='#aaaaaa', scrollregion=(0, 0, 1000, 1900))
+c = Canvas(frame, width=1140, height=1900, bg=bgcolor, scrollregion=(0, 0, 1000, 1900))
 s = Scrollbar(frame)
 c.config(yscrollcommand=s.set)
 s.config(command=c.yview)
 c.pack(side='left')
 s.pack(fill='y', expand=True, side='right')
-bf = Button(timetable, text='вперед', bg='#ee7777', command=button_forward)
+bf = Button(timetable, text='вперед', bg=btcolor, command=button_forward, fg=tcolor)
 bf.pack(side='left')
 convenience = 0
 lessons = {}
 after = []
 row = []
 priority = []
-lengen = 5
 data = openpyxl.open('данные.xlsx')
 read_excel()
 data.save('данные.xlsx')
 ttbl = generate()
+ttbl = ttbl[-lenshow:]
 ttbl = ttbl[::-1]
 cttl = 0
 if ttbl:
@@ -525,4 +578,4 @@ if ttbl:
     convenience = evaluate(ttbl[cttl])
     draw(ttbl[cttl], convenience)
 else:
-    c.create_text(175, 10, text='не удалось составить расписание')
+    c.create_text(175, 10, text='не удалось составить расписание', fill=tcolor)
