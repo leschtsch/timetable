@@ -157,13 +157,13 @@ def create_pairs_excel(a):
 
 # this reads data from excel
 def read_excel():
-    prior_excel()
-    try:
-        for i in priority:
-            create_pairs_excel(i[0])
-    except KeyError:
-        c.create_text(10, 10, text='не все листы препов найдены', font='Arial50', fill='#f00000', anchor='nw')
-    order_excel()
+        prior_excel()
+        try:
+            for i in priority:
+                create_pairs_excel(i[0])
+        except KeyError:
+            c.create_text(10, 10, text='не все листы препов найдены', font='Arial50', fill='#f00000', anchor='nw')
+        order_excel()
 
 
 # this evaluates the timetable
@@ -474,44 +474,48 @@ def button_back():
 
 # this saves tiumetables in excel
 def save():
-    global ttbl
-    wb = openpyxl.Workbook()
-    for i in range(len(ttbl)):
-        wb.create_sheet(str(i + 1))
-        for z in range(len(ttbl[i])):
-            for q in range(len(ttbl[i][z])):
-                for x in range(len(ttbl[i][z][q])):
-                    if ttbl[i][z][q][x]:
-                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z + 2).value = ttbl[i][z][q][x][
-                                                                                         0] + ' ' + ' '.join(
-                            ttbl[i][z][q][x][1])
-                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z + 2).fill = PatternFill(fill_type='solid',
-                                                                                                start_color='FF' +
-                                                                                                            priority[
-                                                                                                                search(
-                                                                                                                    ttbl[
-                                                                                                                        i][
-                                                                                                                        z][
-                                                                                                                        q][
-                                                                                                                        x][
-                                                                                                                        0])][
-                                                                                                                1][
-                                                                                                            1:].upper(),
-                                                                                                end_color='FF' +
-                                                                                                          priority[
-                                                                                                              search(
-                                                                                                                  ttbl[
-                                                                                                                      i][
-                                                                                                                      z][
-                                                                                                                      q][
-                                                                                                                      x][
-                                                                                                                      0])][
-                                                                                                              1][
-                                                                                                          1:].upper())
-                    else:
-                        wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z + 2).value = 'пусто'
-    wb.remove_sheet(wb.get_sheet_by_name('Sheet'))
-    wb.save('timetables.xlsx')
+    global ttbl, c
+    try:
+        wb = openpyxl.Workbook()
+        for i in range(len(ttbl)):
+            wb.create_sheet(str(i + 1))
+            for z in range(len(ttbl[i])):
+                for q in range(len(ttbl[i][z])):
+                    for x in range(len(ttbl[i][z][q])):
+                        if ttbl[i][z][q][x]:
+                            wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z + 2).value = ttbl[i][z][q][x][
+                                                                                             0] + ' ' + ' '.join(
+                                ttbl[i][z][q][x][1])
+                            wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z + 2).fill = PatternFill(fill_type='solid',
+                                                                                                    start_color='FF' +
+                                                                                                                priority[
+                                                                                                                    search(
+                                                                                                                        ttbl[
+                                                                                                                            i][
+                                                                                                                            z][
+                                                                                                                            q][
+                                                                                                                            x][
+                                                                                                                            0])][
+                                                                                                                    1][
+                                                                                                                1:].upper(),
+                                                                                                    end_color='FF' +
+                                                                                                              priority[
+                                                                                                                  search(
+                                                                                                                      ttbl[
+                                                                                                                          i][
+                                                                                                                          z][
+                                                                                                                          q][
+                                                                                                                          x][
+                                                                                                                          0])][
+                                                                                                                  1][
+                                                                                                              1:].upper())
+                        else:
+                            wb[str(i + 1)].cell(row=3 + x * 6 + q, column=z + 2).value = 'пусто'
+        wb.remove_sheet(wb.get_sheet_by_name('Sheet'))
+        wb.save('timetables.xlsx')
+    except PermissionError:
+        c.delete('all')
+        c.create_text(10, 10, text='файл открыт другой программой', font='Arial50', fill='#f00000', anchor='nw')
 
 
 # this reads configuration
@@ -524,6 +528,10 @@ def config():
     bgcolor = conf[2]
     btcolor = conf[3]
     tcolor = conf[4]
+    if lengen > 20:
+        lengen = 20
+    if lenshow > 20:
+        lenshow = 20
     if lenshow < 1:
         lenshow = 1
     if lengen < 1:
@@ -566,10 +574,13 @@ lessons = {}
 after = []
 row = []
 priority = []
-data = openpyxl.open('данные.xlsx')
-read_excel()
-data.save('данные.xlsx')
-ttbl = generate()
+try:
+    data = openpyxl.open('данные.xlsx')
+    read_excel()
+    data.save('данные.xlsx')
+    ttbl = generate()
+except PermissionError:
+    c.create_text(10, 10, text='файл открыт другой программой', font='Arial50', fill='#f00000', anchor='nw')
 ttbl = ttbl[-lenshow:]
 ttbl = ttbl[::-1]
 cttl = 0

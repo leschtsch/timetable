@@ -1,4 +1,5 @@
 from tkinter import *
+import re
 
 
 # this generates timetable, etc.
@@ -283,7 +284,63 @@ def settings():
         tg.insert(0, str(colorsplit(tcolorn, 1)))
         tb.delete(0, last=len(tb.get()))
         tb.insert(0, str(colorsplit(tcolorn, 2)))
+        lg.delete(0, last=len(lg.get()))
+        lg.insert(0, str(lengen))
+        ls.delete(0, last=len(ls.get()))
+        ls.insert(0, str(lenshow))
         settings_entry_upd(1)
+        numbers_entry_upd(1)
+
+    # this updates numbers from entries
+    def numbers_entry_upd(argument_that_is_not_used):
+        global lengen, lenshow, bgcolor, btcolor, tcolor, lengenn, lenshown, bgcolorn, btcolorn, tcolorn
+        st = lg.get()
+        if not st:
+            pass
+        elif not st.isdigit():
+            lg.delete(0, last=len(st))
+            lg.insert(0, '1')
+        elif int(st) < 1:
+            lg.delete(0, last=len(st))
+            lg.insert(0, '1')
+        elif int(st) > 20:
+            lg.delete(0, last=len(st))
+            lg.insert(0, '20')
+        st = ls.get()
+        if not st:
+            pass
+        elif not st.isdigit():
+            ls.delete(0, last=len(st))
+            ls.insert(0, '1')
+        elif int(st) < 1:
+            ls.delete(0, last=len(st))
+            ls.insert(0, '1')
+        elif int(st) > 20:
+            ls.delete(0, last=len(st))
+            ls.insert(0, '20')
+        st = lg.get()
+        if st:
+            lengenn = int(st)
+            lgs.set(int(st))
+        else:
+            lengenn = 1
+            lgs.set(1)
+        st = ls.get()
+        if st:
+            lenshown = int(st)
+            lss.set(int(st))
+        else:
+            lenshown = 1
+            lss.set(1)
+
+    # this updates numbers from scales
+    def numbers_scales_upd(argument_that_is_not_used):
+        global lengen, lenshow, bgcolor, btcolor, tcolor, lengenn, lenshown, bgcolorn, btcolorn, tcolorn
+        lg.delete(0, last=len(lg.get()))
+        lg.insert(0, lgs.get())
+        ls.delete(0, last=len(ls.get()))
+        ls.insert(0, lss.get())
+        numbers_entry_upd(1)
 
     s = Toplevel()
     s['bg'] = bgcolor
@@ -366,6 +423,22 @@ def settings():
     trs.place(x=100, y=250)
     tgs.place(x=100, y=280)
     tbs.place(x=100, y=310)
+    lg = Entry(s)
+    lg.insert(0, str(lengen))
+    lg.place(x=300, y=170, width=50, height=20)
+    ls = Entry(s)
+    ls.insert(0, str(lengen))
+    ls.place(x=300, y=230, width=50, height=20)
+    lg.bind('<KeyRelease>', numbers_entry_upd)
+    ls.bind('<KeyRelease>', numbers_entry_upd)
+    lgs = Scale(s, from_=1, to=20, orient=HORIZONTAL, bg=bgcolor, showvalue=0, highlightthickness=0,
+                command=numbers_scales_upd)
+    lgs.set(lengen)
+    lgs.place(x=370, y=170)
+    lss = Scale(s, from_=1, to=20, orient=HORIZONTAL, bg=bgcolor, showvalue=0, highlightthickness=0,
+                command=numbers_scales_upd)
+    lss.set(lenshow)
+    lss.place(x=370, y=230)
     a = Label(s, text='R:', bg=bgcolor, fg=tcolor)
     a.place(x=10, y=30)
     a = Label(s, text='R:', bg=bgcolor, fg=tcolor)
@@ -390,6 +463,10 @@ def settings():
     a.place(x=30, y=120)
     a = Label(s, text='Текст:', bg=bgcolor, fg=tcolor)
     a.place(x=30, y=230)
+    a = Label(s, text='Качество генерации:', bg=bgcolor, fg=tcolor)
+    a.place(x=300, y=150)
+    a = Label(s, text='Количество генерируемых расписаний:', bg=bgcolor, fg=tcolor)
+    a.place(x=300, y=210)
     a = Label(s, text='Результат применения настроек:', bg=bgcolor, fg=tcolor)
     a.place(x=300, y=10)
     f = Frame(s, bg=bgcolorn, highlightthickness=5)
@@ -413,14 +490,48 @@ def settings():
 # this reads settings
 def config():
     global lengen, lenshow, bgcolor, btcolor, tcolor
-    f = open('config.txt')
-    conf = [i.strip() for i in f]
-    lengen = int(conf[0])
-    lenshow = int(conf[1])
-    bgcolor = conf[2]
-    btcolor = conf[3]
-    tcolor = conf[4]
+    try:
+        f = open('config.txt')
+        conf = [i.strip() for i in f]
+        lengen = int(conf[0])
+        lenshow = int(conf[1])
+        bgcolor = conf[2]
+        btcolor = conf[3]
+        tcolor = conf[4]
+        f.close()
+        if (bgcolor != r'#[1234567890abcdef]{6}') or (btcolor != r'#[1234567890abcdef]{6}') or (
+                tcolor != r'#[1234567890abcdef]{6}'):
+            raise Exception
+    except Exception:
+        f = open('config_defaults.txt')
+        conf = [i.strip() for i in f]
+        lengen = int(conf[0])
+        lenshow = int(conf[1])
+        bgcolor = conf[2]
+        btcolor = conf[3]
+        tcolor = conf[4]
+        f.close()
+        f = open('config.txt', 'w')
+        for i in conf:
+            print(str(i), file=f)
+        f.close()
+
+
+# this shows help
+def help_show():
+    hell = Toplevel()
+    hell['bg'] = bgcolor
+    hell.title('Помощь')
+    hell.geometry('640x360+50+50')
+    t = Text(hell, bg=bgcolor, fg=tcolor, font='Arial 12', wrap=WORD)
+    t.pack(fill='both', expand=True, side='left')
+    f = open('help.txt', encoding='utf-8')
+    st = ''
+    for i in f:
+        st += i
+    t.insert(1.0, st)
     f.close()
+    hell.mainloop()
 
 
 lengen = 0
@@ -442,5 +553,7 @@ b = Button(root, text='Составить расписание', command=imp, bg
 b.pack()
 sett = Button(root, text='Настройки', command=settings, bg=btcolor, fg=tcolor)
 sett.pack()
+hellp = Button(root, text='Помощь', command=help_show, bg=btcolor, fg=tcolor)
+hellp.pack()
 
 root.mainloop()
