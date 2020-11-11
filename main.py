@@ -251,6 +251,8 @@ def settings():
         b['fg'] = tcolor
         sett['bg'] = btcolor
         sett['fg'] = tcolor
+        hellp['bg'] = btcolor
+        hellp['fg'] = tcolor
         f.close()
 
         s.destroy()
@@ -499,10 +501,10 @@ def config():
         btcolor = conf[3]
         tcolor = conf[4]
         f.close()
-        if (bgcolor != r'#[1234567890abcdef]{6}') or (btcolor != r'#[1234567890abcdef]{6}') or (
-                tcolor != r'#[1234567890abcdef]{6}'):
-            raise Exception
-    except Exception:
+        if not (re.search(r'#[1234567890abcdef]{6}', bgcolor) and re.search(r'#[1234567890abcdef]{6}',
+                    btcolor) and re.search(r'#[1234567890abcdef]{6}', tcolor)):
+            raise ValueError
+    except ValueError:
         f = open('config_defaults.txt')
         conf = [i.strip() for i in f]
         lengen = int(conf[0])
