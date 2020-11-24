@@ -144,26 +144,35 @@ def create_pairs_excel(a):
     global lessons
     lessons[a] = {}
     i = 1
+    gtable = []
+    for z in range(i, i + 5):
+        gtable.append([])
+        for q in range(6):
+            gtable[z - i].append(str(data[a][z][q].value))
     while True:
-        if not data[a][i][0].value:
+        if data[a][i][0].value is None:
             break
-        lessons[a][(data[a][i][0].value, str(data[a][i][1].value))] = []
-        for z in range(i + 1, i + 6):
-            lessons[a][(data[a][i][0].value, str(data[a][i][1].value))].append([])
-            for q in range(6):
-                lessons[a][(data[a][i][0].value, str(data[a][i][1].value))][z - i - 1].append(str(data[a][z][q].value))
-        i += 6
+        if (data[a][i][3].value is None) and (data[a][i + 1][3].value is None):
+            lessons[a][(data[a][i][0].value, str(data[a][i][1].value))] = [[x for x in q] for q in gtable]
+        elif (data[a][i][3].value is None) and (data[a][i + 1][3].value is not None):
+            lessons[a][(data[a][i][0].value, str(data[a][i][1].value))] = []
+            for z in range(i + 1, i + 6):
+                lessons[a][(data[a][i][0].value, str(data[a][i][1].value))].append([])
+                for q in range(6):
+                    lessons[a][(data[a][i][0].value, str(data[a][i][1].value))][z - i - 1].append(
+                        str(data[a][z][q].value))
+        i += 1
 
 
 # this reads data from excel
 def read_excel():
-        prior_excel()
-        try:
-            for i in priority:
-                create_pairs_excel(i[0])
-        except KeyError:
-            c.create_text(10, 10, text='не все листы препов найдены', font='Arial50', fill='#f00000', anchor='nw')
-        order_excel()
+    prior_excel()
+    try:
+        for i in priority:
+            create_pairs_excel(i[0])
+    except KeyError:
+        c.create_text(10, 10, text='не все листы препов найдены', font='Arial50', fill='#f00000', anchor='nw')
+    order_excel()
 
 
 # this evaluates the timetable

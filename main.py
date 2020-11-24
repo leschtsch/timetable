@@ -489,6 +489,13 @@ def settings():
     s.mainloop()
 
 
+# checks if it isn't color
+def iscolor(a):
+    if len(a)==7 and re.search(r'#[1234567890abcdef]{6}', a):
+        return True
+    return False
+
+
 # this reads settings
 def config():
     global lengen, lenshow, bgcolor, btcolor, tcolor
@@ -501,8 +508,7 @@ def config():
         btcolor = conf[3]
         tcolor = conf[4]
         f.close()
-        if not (re.search(r'#[1234567890abcdef]{6}', bgcolor) and re.search(r'#[1234567890abcdef]{6}',
-                    btcolor) and re.search(r'#[1234567890abcdef]{6}', tcolor)):
+        if not (iscolor(bgcolor) and iscolor(btcolor) and iscolor(tcolor)):
             raise ValueError
     except ValueError:
         f = open('config_defaults.txt')
