@@ -33,7 +33,7 @@ def order_sort(a):
             p2[z] += 1
     for i in lessons[a[0][0]][a[0][1]]:
         for z in i:
-            r += int(z) * p1[z] * priority[search(a[0][0])][2]
+            r += int(z) * p1[z] * float(priority[search(a[0][0])][2])
     for i in lessons[a[1][0]][a[1][1]]:
         for z in i:
             r += int(z) * p2[z] * priority[search(a[1][0])][2]
@@ -182,7 +182,7 @@ def evaluate(ttl):
         for z in range(len(i)):
             for q in range(len(i[z])):
                 if i[z][q]:
-                    summa += priority[search(i[z][q][0])][2] * int(lessons[i[z][q][0]][i[z][q][1]][z][q])
+                    summa += float(priority[search(i[z][q][0])][2]) * int(lessons[i[z][q][0]][i[z][q][1]][z][q])
     return int(summa)
 
 
@@ -199,8 +199,8 @@ def order_index_sort(a, n1, n2):
     global lessons
     t1 = lessons[n1[0]][n1[1]]
     t2 = lessons[n2[0]][n2[1]]
-    p1 = priority[search(n1[0])][2]
-    p2 = priority[search(n2[0])][2]
+    p1 = float(priority[search(n1[0])][2])
+    p2 = float(priority[search(n2[0])][2])
     s1 = [[i] for i in a.copy()]
     s2 = []
     while len(s1) > 1:  # merge sort
@@ -348,7 +348,7 @@ def pairs_sort(a):
             p1[z] += 1
     for i in lessons[a[0]][a[1]]:
         for z in i:
-            r += int(z) * p1[z] * priority[search(a[0])][2]
+            r += int(z) * p1[z] * float(priority[search(a[0])][2])
     return r
 
 
