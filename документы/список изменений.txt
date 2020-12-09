@@ -9,3 +9,6 @@ V1.1.0 -> v1.1.1
 - algorithm testeded
 - now you can input priorities like strings
 
+v1.1.1 -> v1.1.2
+- better forward and back buttons
+- dynamic text size

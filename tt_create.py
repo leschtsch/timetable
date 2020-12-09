@@ -53,7 +53,7 @@ def order():
         elif a[1] == 'подряд':
             row.append([[p1[0], (p1[1], p1[2])], [p2[0], (p2[1], p2[2])]])
         else:
-            c.create_text(10, 10, text='неизвестное слово:' + a[1], font='Arial50', fill='#f00000', anchor='nw')
+            c.create_text(10, 10, text='неизвестное слово:' + a[1], font='Arial 20', fill='#f00000', anchor='nw')
     f.close()
     row.sort(key=order_sort)
     after.sort(key=order_sort)
@@ -91,7 +91,7 @@ def read():
         for i in priority:
             create_pairs(i[0])
     except FileNotFoundError:
-        c.create_text(10, 10, text='не все файлы препов найдены', font='Arial50', fill='#f00000', anchor='nw')
+        c.create_text(10, 10, text='не все файлы препов найдены', font='Arial 20', fill='#f00000', anchor='nw')
     order()
 
 
@@ -116,7 +116,7 @@ def order_excel():
                 r.append([st[0], (' '.join(st[1:-1]), st[-1])])
                 after.append(r)
             else:
-                c.create_text(10, 10, text='неизвестное слово:' + data['порядок'][i][1].value, font='Arial50',
+                c.create_text(10, 10, text='неизвестное слово:' + data['порядок'][i][1].value, font='Arial 20',
                               fill='#f00000', anchor='nw')
         i += 1
 
@@ -171,7 +171,7 @@ def read_excel():
         for i in priority:
             create_pairs_excel(i[0])
     except KeyError:
-        c.create_text(10, 10, text='не все листы препов найдены', font='Arial50', fill='#f00000', anchor='nw')
+        c.create_text(10, 10, text='не все листы препов найдены', font='Arial 20', fill='#f00000', anchor='nw')
     order_excel()
 
 
@@ -415,7 +415,7 @@ def generate():
 def create_vertical_text(a, b, tex):
     d = 0
     for i in tex:
-        c.create_text(a, b + d, text=i, font='Arial15', fill=tcolor)
+        c.create_text(a, b + d, text=i, font='Arial 17', fill=tcolor)
         d += 17
 
 
@@ -438,13 +438,16 @@ def draw(ttl, conven):
                     center = ((60 + w * (2 * i + 1)) // 2, (100 * q * 5 + 50 * z + 120 + 60 * q + 50 * (z + 1)) // 2)
                     tx = ttl[i][z][q][1][0] + '       ' + ttl[i][z][q][0]
                     tx.strip('\n')
-                    c.create_text(center[0], center[1], text=tx, font='Arial 10', )
+                    siz = 180//(len(tx)-1)
+                    if siz >10:
+                        siz = 10
+                    c.create_text(center[0], center[1], text=tx, font=f'Arial {siz}')
 
-    c.create_text(900, 1750, text='сгенерировано ' + str(len(ttbl)) + ' расписаний из ' + str(lengen), font='Arial15',
+    c.create_text(900, 1750, text='сгенерировано ' + str(len(ttbl)) + ' расписаний из ' + str(lengen), font='Arial 20',
                   fill=tcolor)
-    c.create_text(200, 1750, text='текущее расписание: ' + str(cttl + 1) + ' из ' + str(len(ttbl)), font='Arial15',
+    c.create_text(200, 1750, text='текущее расписание: ' + str(cttl + 1) + ' из ' + str(len(ttbl)), font='Arial 20',
                   fill=tcolor)
-    c.create_text(200, 1800, text='удобство текущего расписания: ' + str(conven), font='Arial15', fill=tcolor)
+    c.create_text(200, 1800, text='удобство текущего расписания: ' + str(conven), font='Arial 20', fill=tcolor)
     create_vertical_text(15, 70, 'Понедельник')
     create_vertical_text(15, 350, 'Вторник')
     create_vertical_text(15, 630, 'Среда')
@@ -454,7 +457,7 @@ def draw(ttl, conven):
 
     for i in range(6):
         for z in range(6):
-            c.create_text(50 + i * 180, 50 + z * 280, text=str(i + 6), font='Arial15', fill=tcolor)
+            c.create_text(50 + i * 180, 50 + z * 280, text=str(i + 6), font='Arial 20', fill=tcolor)
 
 
 # this is def for 'forward' button
@@ -524,7 +527,7 @@ def save():
         wb.save('timetables.xlsx')
     except PermissionError:
         c.delete('all')
-        c.create_text(10, 10, text='файл открыт другой программой', font='Arial50', fill='#f00000', anchor='nw')
+        c.create_text(10, 10, text='файл открыт другой программой', font='Arial 20', fill='#f00000', anchor='nw')
 
 
 # this reads configuration
@@ -566,18 +569,23 @@ timetable = Toplevel()
 timetable['bg'] = bgcolor
 timetable.title('Расписание')
 timetable.geometry('1250x600+10+30')
-bb = Button(timetable, text='Назад', bg=btcolor, command=button_back, fg=tcolor)
+
+ff = Frame(timetable, bg=bgcolor)
+ff.pack(side='bottom')
+bb = Button(ff, text='Назад', bg=btcolor, command=button_back, fg=tcolor, height=3, width=75)
 bb.pack(side='left')
-frame = Frame(timetable, width=1160, height=700, bg=bgcolor)
-frame.pack(side='left')
+bf = Button(ff, text='вперед', bg=btcolor, command=button_forward, fg=tcolor, height=3, width=75)
+bf.pack(side='left')
+
+frame = Frame(timetable, bg=bgcolor)
+frame.pack(side='bottom')
 c = Canvas(frame, width=1140, height=1900, bg=bgcolor, scrollregion=(0, 0, 1000, 1900))
 s = Scrollbar(frame)
 c.config(yscrollcommand=s.set)
 s.config(command=c.yview)
 c.pack(side='left')
 s.pack(fill='y', expand=True, side='right')
-bf = Button(timetable, text='вперед', bg=btcolor, command=button_forward, fg=tcolor)
-bf.pack(side='left')
+
 convenience = 0
 lessons = {}
 after = []
@@ -589,7 +597,7 @@ try:
     data.save('данные.xlsx')
     ttbl = generate()
 except PermissionError:
-    c.create_text(10, 10, text='файл открыт другой программой', font='Arial50', fill='#f00000', anchor='nw')
+    c.create_text(10, 10, text='файл открыт другой программой', font='Arial 20', fill='#f00000', anchor='nw')
 ttbl = ttbl[-lenshow:]
 ttbl = ttbl[::-1]
 cttl = 0
