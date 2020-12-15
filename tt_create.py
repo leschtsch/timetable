@@ -53,7 +53,7 @@ def order():
         elif a[1] == 'подряд':
             row.append([[p1[0], (p1[1], p1[2])], [p2[0], (p2[1], p2[2])]])
         else:
-            c.create_text(10, 10, text='неизвестное слово:' + a[1], font='Arial 20', fill='#f00000', anchor='nw')
+            c.create_text(10, 10, text='неизвестное слово:' + a[1], font='Arial 17', fill='#f00000', anchor='nw')
     f.close()
     row.sort(key=order_sort)
     after.sort(key=order_sort)
@@ -91,7 +91,7 @@ def read():
         for i in priority:
             create_pairs(i[0])
     except FileNotFoundError:
-        c.create_text(10, 10, text='не все файлы препов найдены', font='Arial 20', fill='#f00000', anchor='nw')
+        c.create_text(10, 10, text='не все файлы препов найдены', font='Arial 17', fill='#f00000', anchor='nw')
     order()
 
 
@@ -116,9 +116,25 @@ def order_excel():
                 r.append([st[0], (' '.join(st[1:-1]), st[-1])])
                 after.append(r)
             else:
-                c.create_text(10, 10, text='неизвестное слово:' + data['порядок'][i][1].value, font='Arial 20',
+                c.create_text(10, 10, text='неизвестное слово:' + data['порядок'][i][1].value, font='Arial 17',
                               fill='#f00000', anchor='nw')
         i += 1
+
+
+# this searches for fixed place of pairs
+def time_fixed():
+    for i in lessons:
+        for z in lessons[i]:
+            flag = 0
+            for q in range(len(lessons[i][z])):
+                for p in range(len(lessons[i][z][q])):
+                    if lessons[i][z][q][p] == '100':
+                        flag += 1
+                    if flag > 1:
+                        in_time.append(0)
+                        break
+                    elif flag == 1:
+                        in_time.append((i, z, q, p))
 
 
 # this reads list of teachers from excel
@@ -171,8 +187,9 @@ def read_excel():
         for i in priority:
             create_pairs_excel(i[0])
     except KeyError:
-        c.create_text(10, 10, text='не все листы препов найдены', font='Arial 20', fill='#f00000', anchor='nw')
+        c.create_text(10, 10, text='не все листы препов найдены', font='Arial 17', fill='#f00000', anchor='nw')
     order_excel()
+    time_fixed()
 
 
 # this evaluates the timetable
@@ -290,6 +307,8 @@ def addd(a, i, z):
     if full:
         while flag < lengen:
             if int(m) < -5:
+                m = '-100'
+            if int(m) < -100:
                 return []
             for q in range(len(lessons[i][z])):
                 for x in range(len(lessons[i][z][q])):
@@ -343,12 +362,17 @@ def lessons_copy(lessons):
 def pairs_sort(a):
     r = 0
     p1 = {str(i): 0 for i in range(-5, 6)}
+    p1['-100'] = 0
+    p1['100'] = 0
     for i in lessons[a[0]][a[1]]:
         for z in i:
             p1[z] += 1
     for i in lessons[a[0]][a[1]]:
         for z in i:
-            r += int(z) * p1[z] * float(priority[search(a[0])][2])
+            if z != '-100':
+                r += int(z) * p1[z] * float(priority[search(a[0])][2])
+            else:
+                r -= 1000000
     return r
 
 
@@ -362,6 +386,29 @@ def generate():
         for z in lessons[i]:
             pairs.append([i, z])
     pairs.sort(key=pairs_sort)
+
+    while in_time:
+        gchjgcjdj = [in_time[0][0], in_time[0][1]]
+        ccjcecjec = in_time
+        if in_time[0] == 0:
+            return []
+        if ((not ttables[0][0][in_time[0][2]][in_time[0][3]]) or (
+                ttables[0][0][in_time[0][2]][in_time[0][3]] != in_time[0][0])) and (
+                (not ttables[0][1][in_time[0][2]][in_time[0][3]]) or (
+                ttables[0][1][in_time[0][2]][in_time[0][3]] != in_time[0][0])) and (
+                (not ttables[0][2][in_time[0][2]][in_time[0][3]]) or (
+                ttables[0][2][in_time[0][2]][in_time[0][3]] != in_time[0][0])) and (
+                (not ttables[0][3][in_time[0][2]][in_time[0][3]]) or (
+                ttables[0][3][in_time[0][2]][in_time[0][3]] != in_time[0][0])) and (
+                (not ttables[0][4][in_time[0][2]][in_time[0][3]]) or (
+                ttables[0][4][in_time[0][2]][in_time[0][3]] != in_time[0][0])) and (
+                (not ttables[0][5][in_time[0][2]][in_time[0][3]]) or (
+                ttables[0][5][in_time[0][2]][in_time[0][3]] != in_time[0][0])):
+            ttables[0][int(in_time[0][1][1]) - 6][in_time[0][2]][in_time[0][3]] = [in_time[0][0], in_time[0][1]]
+            pairs.remove([in_time[0][0], in_time[0][1]])
+            in_time.pop(0)
+        else:
+            return []
 
     while row:  # this inserts row
         ttables2 = []
@@ -408,6 +455,7 @@ def generate():
         ttables.sort(key=evaluate)
         if len(ttables) > lengen:
             ttables = ttables[-lengen:]
+
     return ttables
 
 
@@ -436,18 +484,19 @@ def draw(ttl, conven):
                                        60 + 30 * q + 50 * q * 5 + 50 * (z + 1),
                                        fill=color)
                     center = ((60 + w * (2 * i + 1)) // 2, (100 * q * 5 + 50 * z + 120 + 60 * q + 50 * (z + 1)) // 2)
-                    tx = ttl[i][z][q][1][0] + '       ' + ttl[i][z][q][0]
+                    tx = ttl[i][z][q][1][0] + '       ' + ttl[i][z][q][0] + '\n' + \
+                         str(lessons[ttl[i][z][q][0]][ttl[i][z][q][1]][z][q])
                     tx.strip('\n')
-                    siz = 180//(len(tx)-1)
-                    if siz >10:
+                    siz = 180 // int(len(tx) - 10)
+                    if siz > 10:
                         siz = 10
                     c.create_text(center[0], center[1], text=tx, font=f'Arial {siz}')
 
-    c.create_text(900, 1750, text='сгенерировано ' + str(len(ttbl)) + ' расписаний из ' + str(lengen), font='Arial 20',
+    c.create_text(900, 1750, text='сгенерировано ' + str(len(ttbl)) + ' расписаний из ' + str(lengen), font='Arial 17',
                   fill=tcolor)
-    c.create_text(200, 1750, text='текущее расписание: ' + str(cttl + 1) + ' из ' + str(len(ttbl)), font='Arial 20',
+    c.create_text(200, 1750, text='текущее расписание: ' + str(cttl + 1) + ' из ' + str(len(ttbl)), font='Arial 17',
                   fill=tcolor)
-    c.create_text(200, 1800, text='удобство текущего расписания: ' + str(conven), font='Arial 20', fill=tcolor)
+    c.create_text(200, 1800, text='удобство текущего расписания: ' + str(conven), font='Arial 17', fill=tcolor)
     create_vertical_text(15, 70, 'Понедельник')
     create_vertical_text(15, 350, 'Вторник')
     create_vertical_text(15, 630, 'Среда')
@@ -457,7 +506,7 @@ def draw(ttl, conven):
 
     for i in range(6):
         for z in range(6):
-            c.create_text(50 + i * 180, 50 + z * 280, text=str(i + 6), font='Arial 20', fill=tcolor)
+            c.create_text(50 + i * 180, 50 + z * 280, text=str(i + 6), font='Arial 17', fill=tcolor)
 
 
 # this is def for 'forward' button
@@ -527,7 +576,7 @@ def save():
         wb.save('timetables.xlsx')
     except PermissionError:
         c.delete('all')
-        c.create_text(10, 10, text='файл открыт другой программой', font='Arial 20', fill='#f00000', anchor='nw')
+        c.create_text(10, 10, text='файл открыт другой программой', font='Arial 17', fill='#f00000', anchor='nw')
 
 
 # this reads configuration
@@ -564,12 +613,12 @@ btcolor = ''
 tcolor = ''
 lengen = 0
 lenshow = 0
+
 config()
 timetable = Toplevel()
 timetable['bg'] = bgcolor
 timetable.title('Расписание')
 timetable.geometry('1250x600+10+30')
-
 ff = Frame(timetable, bg=bgcolor)
 ff.pack(side='bottom')
 bb = Button(ff, text='Назад', bg=btcolor, command=button_back, fg=tcolor, height=3, width=75)
@@ -591,13 +640,15 @@ lessons = {}
 after = []
 row = []
 priority = []
+in_time = []
+
 try:
     data = openpyxl.open('данные.xlsx')
     read_excel()
     data.save('данные.xlsx')
     ttbl = generate()
 except PermissionError:
-    c.create_text(10, 10, text='файл открыт другой программой', font='Arial 20', fill='#f00000', anchor='nw')
+    c.create_text(10, 10, text='файл открыт другой программой', font='Arial 17', fill='#f00000', anchor='nw')
 ttbl = ttbl[-lenshow:]
 ttbl = ttbl[::-1]
 cttl = 0

@@ -3,12 +3,15 @@ v1.0.1 -> v1.1.0
 - corrected settings check
 - you can make one table for lessons now
 
-
 V1.1.0 -> v1.1.1
 
-- algorithm testeded
+- algorithm tested
 - now you can input priorities like strings
 
 v1.1.1 -> v1.1.2
 - better forward and back buttons
 - dynamic text size
+
+v1.1.2 -> v1.2.0
+- you can use super priorities for lessons
+- I've added priority of this time to output (It's just for developing)
