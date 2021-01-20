@@ -15,3 +15,7 @@ v1.1.1 -> v1.1.2
 v1.1.2 -> v1.2.0
 - you can use super priorities for lessons
 - I've added priority of this time to output (It's just for developing)
+
+v1.2.0 -> v1.2.1
+ - this was final commit
+ - smth could changed

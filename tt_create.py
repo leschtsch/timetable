@@ -5,7 +5,7 @@ from openpyxl.styles import PatternFill
 
 # this is just key for list.sort() for prior
 def priority_sort(a):
-    return a[-1]
+    return a[2]
 
 
 # this reads list of teachers
@@ -123,6 +123,7 @@ def order_excel():
 
 # this searches for fixed place of pairs
 def time_fixed():
+    fff = False
     for i in lessons:
         for z in lessons[i]:
             flag = 0
@@ -135,6 +136,10 @@ def time_fixed():
                         break
                     elif flag == 1:
                         in_time.append((i, z, q, p))
+                        fff = True
+                        break
+                if fff:
+                    break
 
 
 # this reads list of teachers from excel
@@ -143,12 +148,12 @@ def prior_excel():
     i = 1
     while True:
         if data['приоритеты'][i][0].value:
-            priority.append([data['приоритеты'][i][0].value,
-                             data['приоритеты'][i][1].value, data['приоритеты'][i][2].value])
+            priority.append([data['приоритеты'][i][0].value, data['приоритеты'][i][1].value,
+                             data['приоритеты'][i][2].value])
         else:
             break
         i += 1
-    priority.sort(key=priority_sort)
+    priority.sort(key=priority_sort, reverse=True)
     for i in range(len(priority)):
         data['приоритеты'][i + 1][0].value = priority[i][0]
         data['приоритеты'][i + 1][1].value = priority[i][1]
@@ -318,7 +323,12 @@ def addd(a, i, z):
                                 (not a[2][q][x]) or (a[2][q][x][0] != i)) and (
                                 (not a[3][q][x]) or (a[3][q][x][0] != i)) and (
                                 (not a[4][q][x]) or (a[4][q][x][0] != i)) and (
-                                (not a[5][q][x]) or (a[5][q][x][0] != i)):
+                                (not a[5][q][x]) or (a[5][q][x][0] != i)) and (
+                                (not a[int(z[1]) - 6][0][x]) or a[int(z[1]) - 6][0][x][0] != i) and (
+                                (not a[int(z[1]) - 6][1][x]) or a[int(z[1]) - 6][1][x][0] != i) and (
+                                (not a[int(z[1]) - 6][2][x]) or a[int(z[1]) - 6][2][x][0] != i) and (
+                                (not a[int(z[1]) - 6][3][x]) or a[int(z[1]) - 6][3][x][0] != i) and (
+                                (not a[int(z[1]) - 6][4][x]) or a[int(z[1]) - 6][4][x][0] != i):
                             a2 = tt_copy(a)
                             a2[int(z[1]) - 6][q][x] = [i, z]
                             res.append(a2)
@@ -388,8 +398,6 @@ def generate():
     pairs.sort(key=pairs_sort)
 
     while in_time:
-        gchjgcjdj = [in_time[0][0], in_time[0][1]]
-        ccjcecjec = in_time
         if in_time[0] == 0:
             return []
         if ((not ttables[0][0][in_time[0][2]][in_time[0][3]]) or (
@@ -404,11 +412,15 @@ def generate():
                 ttables[0][4][in_time[0][2]][in_time[0][3]] != in_time[0][0])) and (
                 (not ttables[0][5][in_time[0][2]][in_time[0][3]]) or (
                 ttables[0][5][in_time[0][2]][in_time[0][3]] != in_time[0][0])):
+            ssssss = in_time
             ttables[0][int(in_time[0][1][1]) - 6][in_time[0][2]][in_time[0][3]] = [in_time[0][0], in_time[0][1]]
             pairs.remove([in_time[0][0], in_time[0][1]])
             in_time.pop(0)
         else:
             return []
+        ttables.sort(key=evaluate)
+        if len(ttables) > lengen:
+            ttables = ttables[-lengen:]
 
     while row:  # this inserts row
         ttables2 = []
@@ -418,6 +430,9 @@ def generate():
                 ttables2.extend(n)
             else:
                 return []
+            ttables2.sort(key=evaluate)
+            if len(ttables2) > lengen:
+                ttables2 = ttables2[-lengen:]
         pairs.remove([row[0][0][0], row[0][0][1]])
         pairs.remove([row[0][1][0], row[0][1][1]])
         row.pop(0)
@@ -434,6 +449,9 @@ def generate():
                 ttables2.extend(n)
             else:
                 return []
+            ttables2.sort(key=evaluate)
+            if len(ttables2) > lengen:
+                ttables2 = ttables2[-lengen:]
         pairs.remove([row[0][0][0], row[0][0][1]])
         pairs.remove([row[0][1][0], row[0][1][1]])
         after.pop(0)
@@ -450,6 +468,9 @@ def generate():
                 ttables2.extend(n)
             else:
                 return []
+            ttables2.sort(key=evaluate)
+            if len(ttables2) > lengen:
+                ttables2 = ttables2[-lengen:]
         ttables = ttables2
         pairs.pop(0)
         ttables.sort(key=evaluate)
@@ -492,7 +513,7 @@ def draw(ttl, conven):
                         siz = 10
                     c.create_text(center[0], center[1], text=tx, font=f'Arial {siz}')
 
-    c.create_text(900, 1750, text='сгенерировано ' + str(len(ttbl)) + ' расписаний из ' + str(lengen), font='Arial 17',
+    c.create_text(900, 1750, text='сгенерировано ' + str(len(ttbl)) + ' расписаний из ' + str(lenshow), font='Arial 17',
                   fill=tcolor)
     c.create_text(200, 1750, text='текущее расписание: ' + str(cttl + 1) + ' из ' + str(len(ttbl)), font='Arial 17',
                   fill=tcolor)
@@ -639,6 +660,7 @@ convenience = 0
 lessons = {}
 after = []
 row = []
+together_count = 0
 priority = []
 in_time = []
 
